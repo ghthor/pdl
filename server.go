@@ -2,22 +2,22 @@ package main
 
 import (
 	"fmt"
+	"github.com/ghthor/pdl/config"
 	"log"
 	"net/http"
 )
 
 func main() {
 
-	config := struct {
-		Addr, RedirectPort, SslPort string
-		SslCert, SslKey             string
-	}{
-		"127.0.0.1", "8080", "8081",
-		"tls-gen/cert.pem", "tls-gen/key.pem",
+	log.Println("Reading Config file: config.json")
+
+	config, err := config.ReadFromFile("config.json")
+	if err != nil {
+		log.Fatalf("Error reading config: %v", err)
 	}
 
-	listenAddrHTTP := fmt.Sprintf("%s:%s", config.Addr, config.RedirectPort)
-	listenAddrHTTPS := fmt.Sprintf("%s:%s", config.Addr, config.SslPort)
+	listenAddrHTTP := fmt.Sprintf("%s:%d", config.LAddr, config.RedirectPort)
+	listenAddrHTTPS := fmt.Sprintf("%s:%d", config.LAddr, config.SslPort)
 
 	addrHTTPS := fmt.Sprintf("https://%s", listenAddrHTTPS)
 
@@ -39,7 +39,7 @@ func main() {
 
 	handler := http.DefaultServeMux
 
-	err := http.ListenAndServeTLS(listenAddrHTTPS, config.SslCert, config.SslKey, handler)
+	err = http.ListenAndServeTLS(listenAddrHTTPS, config.SslCert, config.SslKey, handler)
 	if err != nil {
 		log.Fatal(err)
 	}
