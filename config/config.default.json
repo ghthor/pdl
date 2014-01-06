@@ -1,0 +1,16 @@
+{
+    "lAddr": "127.0.0.1",
+
+    "redirectPort": 80,
+
+    "sslPort": 443,
+    "sslCert": "tls-gen/cert.pem",
+    "sslKey": "tls-gen/key.pem",
+
+    "database": {
+        "username": "dbuser",
+        "password": "dbpassword",
+        "defaultDB": "dbname",
+        "fileSystemDB": "filepath/to/filedb"
+    }
+}
