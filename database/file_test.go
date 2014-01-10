@@ -4,28 +4,16 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/ghthor/database/config"
 	"github.com/ghthor/database/datatype"
 	"github.com/ghthor/database/dbtesting"
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
 )
-
-var cfg config.Config
-
-func init() {
-	var err error
-	cfg, err = config.ReadFromFile("config.json")
-	if err != nil {
-		log.Fatalf("error reading config: %s", err)
-	}
-}
 
 func (e *AddFileEx) Describe(c *dbtesting.ExecutorContext) {
 	var err error
