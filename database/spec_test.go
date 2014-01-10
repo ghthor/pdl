@@ -14,5 +14,7 @@ func TestUnitSpecs(t *testing.T) {
 func TestIntegrationSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
+	r.AddSpec(DescribeAddFileExecutor)
+
 	gospec.MainGoTest(r, t)
 }
