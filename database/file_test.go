@@ -42,6 +42,8 @@ func (e *AddFileEx) Describe(c *dbtesting.ExecutorContext) {
 
 	sha1Name := hex.EncodeToString(h.Sum(nil)) + filepath.Ext("image_test.png")
 
+	c.SpecifyResult(File{FileId(1), sha1Name})
+
 	c.SpecifySideEffects("should insert a row into the `file` table", func() {
 		conn := c.Db.MysqlDatabase().Conn
 		rows, res, err := conn.Query("select * from `file`")

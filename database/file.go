@@ -11,6 +11,15 @@ func init() {
 	database.RegisterAction(AddFile{}, NewAddFileEx)
 }
 
+type (
+	FileId datatype.Id
+
+	File struct {
+		Id       FileId `json:"id"`
+		Filename string `json:"filename"`
+	}
+)
+
 type AddFile struct {
 	File datatype.FormFile
 }
@@ -49,9 +58,9 @@ func (e *AddFileEx) ExecuteWith(a action.A) (interface{}, error) {
 		return nil, err
 	}
 
-	fileId := datatype.Id(res.InsertId())
+	fileId := FileId(res.InsertId())
 
-	return fileId, nil
+	return File{fileId, filename}, nil
 }
 
 func NewAddFileEx(c database.DatabaseConn) (database.Executor, error) {
