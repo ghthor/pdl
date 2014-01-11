@@ -3,11 +3,13 @@ DIRS = mysql
 EXAMPLE_APP = example
 EXAMPLE_APP_FILES = $(shell find $(EXAMPLE_APP).app/*.js) $(shell find $(EXAMPLE_APP).app/*.html)
 
-test:
-	go test -run=UnitSpecs
+test: test-deps
+	go test -run=UnitSpecs -rebuild-deps=false
 
-integration-test: mysql/schema.sql
-	go test -run=IntegrationSpecs
+integration-test: test-deps
+	go test -run=IntegrationSpecs -rebuild-deps=false
+
+test-deps: mysql/schema.sql $(EXAMPLE_APP).pkg
 
 mysql/%.sql : force_look
 	$(MAKE) -C mysql $(subst mysql/,,$@) $(MFLAGS)
@@ -25,4 +27,4 @@ clean :
 force_look :
 	@true
 
-.PHONY : test integration-test clean
+.PHONY : test integration-test test-deps clean
