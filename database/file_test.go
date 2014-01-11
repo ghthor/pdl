@@ -15,6 +15,20 @@ import (
 	"path/filepath"
 )
 
+func testFile(filepathStr string) (datatype.FormFile, error) {
+	file, err := os.Open(filepathStr)
+	if err != nil {
+		return datatype.FormFile{}, err
+	}
+
+	return datatype.FormFile{
+		File: file,
+		Header: &multipart.FileHeader{
+			Filename: filepath.Base(filepathStr),
+		},
+	}, nil
+}
+
 func (e *AddFileEx) Describe(c *dbtesting.ExecutorContext) {
 	var err error
 
@@ -61,20 +75,6 @@ func (e *AddFileEx) Describe(c *dbtesting.ExecutorContext) {
 		c.Assume(len(filenames), Equals, 1)
 	})
 
-}
-
-func testFile(filepathStr string) (datatype.FormFile, error) {
-	file, err := os.Open(filepathStr)
-	if err != nil {
-		return datatype.FormFile{}, err
-	}
-
-	return datatype.FormFile{
-		File: file,
-		Header: &multipart.FileHeader{
-			Filename: filepath.Base(filepathStr),
-		},
-	}, nil
 }
 
 func DescribeAddFileExecutor(c gospec.Context) {
