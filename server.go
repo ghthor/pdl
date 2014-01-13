@@ -8,12 +8,11 @@ import (
 )
 
 func main() {
-
 	log.Println("Reading Config file: config.json")
 
 	config, err := config.ReadFromFile("config.json")
 	if err != nil {
-		log.Fatalf("Error reading config: %v", err)
+		log.Fatalf("error reading config: %v", err)
 	}
 
 	listenAddrHTTP := fmt.Sprintf("%s:%d", config.LAddr, config.RedirectPort)
