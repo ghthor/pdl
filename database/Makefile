@@ -4,10 +4,10 @@ EXAMPLE_APP = example
 EXAMPLE_APP_FILES = $(shell find $(EXAMPLE_APP).app/*.js) $(shell find $(EXAMPLE_APP).app/*.html)
 
 test: test-deps
-	go test -run=UnitSpecs -rebuild-deps=false
+	go test -run=UnitSpecs
 
 integration-test: test-deps
-	go test -run=IntegrationSpecs -rebuild-deps=false
+	go test -run=IntegrationSpecs
 
 test-deps: mysql/schema.sql $(EXAMPLE_APP).pkg $(EXAMPLE_APP).pkg.modified
 
