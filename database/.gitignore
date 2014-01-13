@@ -1,3 +1,4 @@
 *.swp
 *.test
-example.pkg
+example.pkg*
+
