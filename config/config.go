@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	dbconfig "github.com/ghthor/database/config"
 	"io/ioutil"
 )
 
@@ -14,14 +15,7 @@ type ServerConfig struct {
 	SslCert string `json:"sslCert"`
 	SslKey  string `json:"sslKey"`
 
-	Database DatabaseConfig `json:"database"`
-}
-
-type DatabaseConfig struct {
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	DefaultDB    string `json:"defaultDB"`
-	FileSystemDB string `json:"fileSystemDB"`
+	Database dbconfig.Config `json:"database"`
 }
 
 func ReadFromFile(file string) (c ServerConfig, err error) {
