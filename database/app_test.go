@@ -14,10 +14,10 @@ import (
 	"strings"
 )
 
-func (e *RegisterAppEx) Describe(c *dbtesting.ExecutorContext) {
+func (e *InstallAppEx) Describe(c *dbtesting.ExecutorContext) {
 	var err error
 
-	c.Impl, err = NewRegisterAppEx(c.Db)
+	c.Impl, err = NewInstallAppEx(c.Db)
 	c.Assume(err, IsNil)
 
 	pkgFilename := "example.pkg"
@@ -55,7 +55,7 @@ func (e *RegisterAppEx) Describe(c *dbtesting.ExecutorContext) {
 		c.Expect(os.IsNotExist(err), IsFalse)
 	})
 
-	c.SpecifySideEffects("shoud insert a row in the `app` table", func() {
+	c.SpecifySideEffects("should insert a row in the `app` table", func() {
 		conn := c.Db.MysqlDatabase().Conn
 		rows, res, err := conn.Query("select * from `app`")
 		c.Assume(err, IsNil)
@@ -69,15 +69,15 @@ func (e *RegisterAppEx) Describe(c *dbtesting.ExecutorContext) {
 	})
 }
 
-func DescribeRegisterAppExecutor(c gospec.Context) {
+func DescribeInstallAppExecutors(c gospec.Context) {
 	pkgFile, err := testFile("example.pkg")
 	c.Assume(err, IsNil)
 
 	schemeBytes, err := ioutil.ReadFile("mysql/schema.sql")
 	c.Assume(err, IsNil)
 
-	action := RegisterApp{pkgFile}
+	action := InstallApp{pkgFile}
 
-	dbtesting.DescribeExecutor(c, action, &RegisterAppEx{}, cfg, string(schemeBytes), nil)
+	dbtesting.DescribeExecutor(c, action, &InstallAppEx{}, cfg, string(schemeBytes), nil)
 
 }

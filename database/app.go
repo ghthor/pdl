@@ -24,24 +24,24 @@ type (
 	}
 )
 
-type RegisterApp struct {
+type InstallApp struct {
 	Pkg datatype.FormFile
 }
 
-func (a RegisterApp) IsValid() error {
+func (a InstallApp) IsValid() error {
 	// TODO: Implement
 	return nil
 }
 
-type RegisterAppEx struct {
+type InstallAppEx struct {
 	database.DatabaseConn
 
 	insertFileStmt mysql.Stmt
 	insertAppStmt  mysql.Stmt
 }
 
-func (e *RegisterAppEx) ExecuteWith(a action.A) (interface{}, error) {
-	registerApp, ok := a.(RegisterApp)
+func (e *InstallAppEx) ExecuteWith(a action.A) (interface{}, error) {
+	installApp, ok := a.(InstallApp)
 	if !ok {
 		return nil, database.ErrInvalidAction
 	}
@@ -51,9 +51,9 @@ func (e *RegisterAppEx) ExecuteWith(a action.A) (interface{}, error) {
 		return nil, err
 	}
 
-	name := strings.Split(filepath.Base(registerApp.Pkg.Header.Filename), ".")[0]
+	name := strings.Split(filepath.Base(installApp.Pkg.Header.Filename), ".")[0]
 
-	filename, err := tx.SaveFile(registerApp.Pkg)
+	filename, err := tx.SaveFile(installApp.Pkg)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (e *RegisterAppEx) ExecuteWith(a action.A) (interface{}, error) {
 	}, nil
 }
 
-func NewRegisterAppEx(c database.DatabaseConn) (database.Executor, error) {
+func NewInstallAppEx(c database.DatabaseConn) (database.Executor, error) {
 	insertFileStmt, err := c.MysqlConn().Prepare("insert into `file` (filename) values (?)")
 	if err != nil {
 		return nil, err
@@ -95,5 +95,5 @@ func NewRegisterAppEx(c database.DatabaseConn) (database.Executor, error) {
 		return nil, err
 	}
 
-	return &RegisterAppEx{c, insertFileStmt, insertAppStmt}, nil
+	return &InstallAppEx{c, insertFileStmt, insertAppStmt}, nil
 }

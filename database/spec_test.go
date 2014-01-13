@@ -72,7 +72,7 @@ func TestIntegrationSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
 	r.AddSpec(DescribeAddFileExecutor)
-	r.AddSpec(DescribeRegisterAppExecutor)
+	r.AddSpec(DescribeInstallAppExecutors)
 
 	gospec.MainGoTest(r, t)
 }
