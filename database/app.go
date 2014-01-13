@@ -14,6 +14,10 @@ var (
 	ErrInvalidAppName = errors.New("invalid app name")
 )
 
+var (
+	ErrAppAlreadyExists = errors.New("app already exists")
+)
+
 type (
 	AppId datatype.Id
 
@@ -36,6 +40,7 @@ func (a InstallApp) IsValid() error {
 type InstallAppEx struct {
 	database.DatabaseConn
 
+	selectAppStmt  mysql.Stmt
 	insertFileStmt mysql.Stmt
 	insertAppStmt  mysql.Stmt
 }
@@ -46,12 +51,20 @@ func (e *InstallAppEx) ExecuteWith(a action.A) (interface{}, error) {
 		return nil, database.ErrInvalidAction
 	}
 
-	tx, err := e.Begin()
+	name := strings.Split(filepath.Base(installApp.Pkg.Header.Filename), ".")[0]
+	rows, _, err := e.selectAppStmt.Exec(name)
 	if err != nil {
 		return nil, err
 	}
 
-	name := strings.Split(filepath.Base(installApp.Pkg.Header.Filename), ".")[0]
+	if len(rows) != 0 {
+		return nil, ErrAppAlreadyExists
+	}
+
+	tx, err := e.Begin()
+	if err != nil {
+		return nil, err
+	}
 
 	filename, err := tx.SaveFile(installApp.Pkg)
 	if err != nil {
@@ -85,6 +98,11 @@ func (e *InstallAppEx) ExecuteWith(a action.A) (interface{}, error) {
 }
 
 func NewInstallAppEx(c database.DatabaseConn) (database.Executor, error) {
+	selectAppStmt, err := c.MysqlConn().Prepare("select (name) from `app` where name = ?")
+	if err != nil {
+		return nil, err
+	}
+
 	insertFileStmt, err := c.MysqlConn().Prepare("insert into `file` (filename) values (?)")
 	if err != nil {
 		return nil, err
@@ -95,5 +113,5 @@ func NewInstallAppEx(c database.DatabaseConn) (database.Executor, error) {
 		return nil, err
 	}
 
-	return &InstallAppEx{c, insertFileStmt, insertAppStmt}, nil
+	return &InstallAppEx{c, selectAppStmt, insertFileStmt, insertAppStmt}, nil
 }
