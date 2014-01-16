@@ -72,7 +72,7 @@ func (e *InstallAppEx) Describe(c *dbtesting.ExecutorContext) {
 
 		c.SpecifySideEffects("will have inserted a row in the `app` table", func() {
 			conn := c.Db.MysqlDatabase().Conn
-			rows, res, err := conn.Query("select * from `app`")
+			rows, res, err := conn.Query("select id, name, pkgId from `app`")
 			c.Assume(err, IsNil)
 
 			c.Expect(len(rows), Equals, 1)
