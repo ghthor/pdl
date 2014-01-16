@@ -156,7 +156,7 @@ func (e *InstallAppEx) Describe(c *dbtesting.ExecutorContext) {
 	})
 }
 
-func DescribeInstallAppExecutors(c gospec.Context) {
+func DescribeExecutors(c gospec.Context) {
 	pkgs, err := pkgFiles()
 	c.Assume(err, IsNil)
 
