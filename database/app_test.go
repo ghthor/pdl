@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/ghthor/database/datatype"
 	"github.com/ghthor/database/dbtesting"
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
@@ -13,6 +14,25 @@ import (
 	"path/filepath"
 	"strings"
 )
+
+func pkgFiles() (map[string]datatype.FormFile, error) {
+	pkgs := map[string]datatype.FormFile{
+		"example.pkg":          datatype.FormFile{},
+		"example.pkg.modified": datatype.FormFile{},
+	}
+
+	for filename, _ := range pkgs {
+		formFile, err := testFile(filename)
+		if err != nil {
+			return nil, err
+		}
+
+		pkgs[filename] = formFile
+	}
+	pkgs["example.pkg.modified"].Header.Filename = "example.pkg"
+
+	return pkgs, nil
+}
 
 func (e *InstallAppEx) Describe(c *dbtesting.ExecutorContext) {
 	var err error
@@ -137,14 +157,11 @@ func (e *InstallAppEx) Describe(c *dbtesting.ExecutorContext) {
 }
 
 func DescribeInstallAppExecutors(c gospec.Context) {
-	pkgFile, err := testFile("example.pkg")
+	pkgs, err := pkgFiles()
 	c.Assume(err, IsNil)
 
 	schemeBytes, err := ioutil.ReadFile("mysql/schema.sql")
 	c.Assume(err, IsNil)
 
-	action := InstallApp{pkgFile}
-
-	dbtesting.DescribeExecutor(c, action, &InstallAppEx{}, cfg, string(schemeBytes), nil)
-
+	dbtesting.DescribeExecutor(c, InstallApp{pkgs["example.pkg"]}, &InstallAppEx{}, cfg, string(schemeBytes), nil)
 }
