@@ -156,6 +156,93 @@ func (e *InstallAppEx) Describe(c *dbtesting.ExecutorContext) {
 	})
 }
 
+func (e *UpdateAppEx) Describe(c *dbtesting.ExecutorContext) {
+	var err error
+
+	c.Impl, err = NewUpdateAppEx(c.Db)
+	c.Assume(err, IsNil)
+
+	pkgs, err := pkgFiles()
+	c.Assume(err, IsNil)
+
+	// Install example.pkg
+	installAppEx, err := NewInstallAppEx(c.Db)
+	c.Assume(err, IsNil)
+
+	_, err = installAppEx.ExecuteWith(InstallApp{pkgs["example.pkg"]})
+	c.Assume(err, IsNil)
+
+	c.Specify("after executing without an error", func() {
+		pkgBytes, err := ioutil.ReadFile("example.pkg.modified")
+		c.Assume(err, IsNil)
+
+		h := sha1.New()
+		_, err = io.Copy(h, bytes.NewReader(pkgBytes))
+		c.Assume(err, IsNil)
+
+		sha1Name := hex.EncodeToString(h.Sum(nil)) + filepath.Ext("example.pkg")
+
+		c.SpecifySideEffects("will save the pkg to the filesystem", func() {
+			_, err := os.Stat(filepath.Join(c.Db.Filepath(), sha1Name))
+			c.Expect(os.IsNotExist(err), IsFalse)
+		})
+
+		// Because the pkg file is different
+		c.SpecifySideEffects("will insert a new row in the `file` table for the pkg", func() {
+			conn := c.Db.MysqlDatabase().Conn
+			rows, res, err := conn.Query("select * from `file`")
+			c.Assume(err, IsNil)
+
+			c.Expect(len(rows), Equals, 2)
+			for _, row := range rows[1:] {
+				c.Expect(row.ForceUint64(res.Map("id")), Equals, uint64(2))
+				c.Expect(row.Str(res.Map("filename")), Equals, sha1Name)
+			}
+		})
+
+		// App Updates will be stored as another app with the same name
+		// When loading an app by name, the app with the most recent install date will be used
+		c.SpecifySideEffects("will insert a new row in the `app` table", func() {
+			conn := c.Db.MysqlDatabase().Conn
+			rows, res, err := conn.Query("select id, name, pkgId from `app`")
+			c.Assume(err, IsNil)
+
+			c.Expect(len(rows), Equals, 2)
+			for _, row := range rows[1:] {
+				c.Expect(row.ForceUint64(res.Map("id")), Equals, uint64(2))
+				c.Expect(row.Str(res.Map("name")), Equals, "example")
+				c.Expect(row.ForceUint64(res.Map("pkgId")), Equals, uint64(2))
+			}
+		})
+
+		c.SpecifyResult(App{
+			Id:   AppId(2),
+			Name: "example",
+			Pkg:  File{FileId(2), sha1Name},
+		})
+	})
+
+	notSaved := func() {}
+	noFileInserted := func() {}
+	noAppInserted := func() {}
+
+	c.Specify("will fail because the app has not been installed and", func() {
+		c.SpecifySideEffects("will not save the pkg to the filesystem", notSaved)
+
+		c.SpecifySideEffects("will not insert a new row in the `file` table", noFileInserted)
+
+		c.SpecifySideEffects("will not insert a new row in the `app` table", noAppInserted)
+	})
+
+	c.Specify("will fail because the pkg file is not different and", func() {
+		c.SpecifySideEffects("will not save the pkg to the filesystem", notSaved)
+
+		c.SpecifySideEffects("will not insert a new row in the `file` table", noFileInserted)
+
+		c.SpecifySideEffects("will not insert a new row in the `app` table", noAppInserted)
+	})
+}
+
 func DescribeExecutors(c gospec.Context) {
 	pkgs, err := pkgFiles()
 	c.Assume(err, IsNil)
@@ -164,4 +251,5 @@ func DescribeExecutors(c gospec.Context) {
 	c.Assume(err, IsNil)
 
 	dbtesting.DescribeExecutor(c, InstallApp{pkgs["example.pkg"]}, &InstallAppEx{}, cfg, string(schemeBytes), nil)
+	dbtesting.DescribeExecutor(c, UpdateApp{pkgs["example.pkg.modified"]}, &UpdateAppEx{}, cfg, string(schemeBytes), nil)
 }

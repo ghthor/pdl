@@ -115,3 +115,73 @@ func NewInstallAppEx(c database.DatabaseConn) (database.Executor, error) {
 
 	return &InstallAppEx{c, selectAppStmt, insertFileStmt, insertAppStmt}, nil
 }
+
+type UpdateApp InstallApp
+
+func (a UpdateApp) IsValid() error {
+	// TODO: Implement
+	return nil
+}
+
+type UpdateAppEx struct {
+	database.DatabaseConn
+
+	insertFileStmt mysql.Stmt
+	insertAppStmt  mysql.Stmt
+}
+
+func (e *UpdateAppEx) ExecuteWith(a action.A) (interface{}, error) {
+	updateApp, ok := a.(UpdateApp)
+	if !ok {
+		return nil, database.ErrInvalidAction
+	}
+
+	name := strings.Split(filepath.Base(updateApp.Pkg.Header.Filename), ".")[0]
+
+	tx, err := e.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	filename, err := tx.SaveFile(updateApp.Pkg)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := tx.Run(e.insertFileStmt, filename)
+	if err != nil {
+		return nil, err
+	}
+	fileId := FileId(res.InsertId())
+
+	res, err = tx.Run(e.insertAppStmt, name, uint64(fileId))
+	if err != nil {
+		return nil, err
+	}
+	appId := AppId(res.InsertId())
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return App{
+		Id:   appId,
+		Name: name,
+		Pkg:  File{fileId, filename},
+	}, nil
+}
+
+func NewUpdateAppEx(c database.DatabaseConn) (database.Executor, error) {
+	insertFileStmt, err := c.MysqlConn().Prepare("insert into `file` (filename) values (?)")
+	if err != nil {
+		return nil, err
+	}
+
+	insertAppStmt, err := c.MysqlConn().Prepare("insert into `app` (name, pkgId) values (?, ?)")
+	if err != nil {
+		return nil, err
+	}
+
+	return &UpdateAppEx{c, insertFileStmt, insertAppStmt}, nil
+}
