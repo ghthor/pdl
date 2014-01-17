@@ -9,7 +9,7 @@ test: test-deps
 integration-test: test-deps
 	go test -run=IntegrationSpecs
 
-test-deps: mysql/schema.sql $(EXAMPLE_APP).pkg $(EXAMPLE_APP).pkg.modified
+test-deps: mysql/schema.sql $(EXAMPLE_APP).pkg $(EXAMPLE_APP).pkg.1 $(EXAMPLE_APP).pkg.2 another.pkg
 
 mysql/%.sql : force_look
 	$(MAKE) -C mysql $(subst mysql/,,$@) $(MFLAGS)
@@ -17,8 +17,18 @@ mysql/%.sql : force_look
 $(EXAMPLE_APP).pkg : $(EXAMPLE_APP_FILES)
 	zip -r $@ $(EXAMPLE_APP).app
 
-$(EXAMPLE_APP).pkg.modified : $(EXAMPLE_APP_FILES)
-	echo "some data" > $(EXAMPLE_APP).app/extra_data
+$(EXAMPLE_APP).pkg.1 : $(EXAMPLE_APP_FILES)
+	echo "1" > $(EXAMPLE_APP).app/extra_data
+	zip -r $@ $(EXAMPLE_APP).app
+	rm -f $(EXAMPLE_APP).app/extra_data
+
+$(EXAMPLE_APP).pkg.2 : $(EXAMPLE_APP_FILES)
+	echo "2" > $(EXAMPLE_APP).app/extra_data
+	zip -r $@ $(EXAMPLE_APP).app
+	rm -f $(EXAMPLE_APP).app/extra_data
+
+another.pkg : $(EXAMPLE_APP).pkg
+	echo "another" > $(EXAMPLE_APP).app/extra_data
 	zip -r $@ $(EXAMPLE_APP).app
 	rm -f $(EXAMPLE_APP).app/extra_data
 
@@ -28,7 +38,9 @@ clean :
 	done
 	go clean ./...
 	rm -f $(EXAMPLE_APP).pkg
-	rm -f $(EXAMPLE_APP).pkg.modified
+	rm -f $(EXAMPLE_APP).pkg.1
+	rm -f $(EXAMPLE_APP).pkg.2
+	rm -f another.pkg
 
 force_look :
 	@true

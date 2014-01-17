@@ -17,8 +17,10 @@ import (
 
 func pkgFiles() (map[string]datatype.FormFile, error) {
 	pkgs := map[string]datatype.FormFile{
-		"example.pkg":          datatype.FormFile{},
-		"example.pkg.modified": datatype.FormFile{},
+		"example.pkg":   datatype.FormFile{},
+		"example.pkg.1": datatype.FormFile{},
+		"example.pkg.2": datatype.FormFile{},
+		"another.pkg":   datatype.FormFile{},
 	}
 
 	for filename, _ := range pkgs {
@@ -29,7 +31,8 @@ func pkgFiles() (map[string]datatype.FormFile, error) {
 
 		pkgs[filename] = formFile
 	}
-	pkgs["example.pkg.modified"].Header.Filename = "example.pkg"
+	pkgs["example.pkg.1"].Header.Filename = "example.pkg"
+	pkgs["example.pkg.2"].Header.Filename = "example.pkg"
 
 	return pkgs, nil
 }
@@ -100,7 +103,7 @@ func (e *InstallAppEx) Describe(c *dbtesting.ExecutorContext) {
 
 		// Setup to Install the app again with a different pkg file
 		// This is to verify that the installed app's pkg isn't overwritten
-		pkgFilename := "example.pkg.modified"
+		pkgFilename := "example.pkg.1"
 		pkgFile, err := testFile(pkgFilename)
 		c.Assume(err, IsNil)
 		// Make sure the Filename's are the same as far as the Executor is concerned
@@ -132,7 +135,7 @@ func (e *InstallAppEx) Describe(c *dbtesting.ExecutorContext) {
 					bytes, err := ioutil.ReadFile(path)
 					c.Assume(err, IsNil)
 
-					// Check to make sure this file IS NOT example.pkg.modified
+					// Check to make sure this file IS NOT example.pkg.1
 					c.Expect(string(bytes), Not(Equals), string(pkgBytes))
 					c.Expect(filepath.Base(path), Not(Equals), sha1Name)
 				}
@@ -173,7 +176,7 @@ func (e *UpdateAppEx) Describe(c *dbtesting.ExecutorContext) {
 	c.Assume(err, IsNil)
 
 	c.Specify("after executing without an error", func() {
-		pkgBytes, err := ioutil.ReadFile("example.pkg.modified")
+		pkgBytes, err := ioutil.ReadFile("example.pkg.1")
 		c.Assume(err, IsNil)
 
 		h := sha1.New()
@@ -251,5 +254,5 @@ func DescribeExecutors(c gospec.Context) {
 	c.Assume(err, IsNil)
 
 	dbtesting.DescribeExecutor(c, InstallApp{pkgs["example.pkg"]}, &InstallAppEx{}, cfg, string(schemeBytes), nil)
-	dbtesting.DescribeExecutor(c, UpdateApp{pkgs["example.pkg.modified"]}, &UpdateAppEx{}, cfg, string(schemeBytes), nil)
+	dbtesting.DescribeExecutor(c, UpdateApp{pkgs["example.pkg.1"]}, &UpdateAppEx{}, cfg, string(schemeBytes), nil)
 }
